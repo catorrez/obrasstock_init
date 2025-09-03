@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Invitación creada</h1>
+    {% if invite.email %}
+      <p>Se invitó a: <strong>{{ invite.email }}</strong></p>
+    {% else %}
+      <p>Invitación por enlace (sin email).</p>
+    {% endif %}
+    <p>Link para unirse:</p>
+    <pre>{{ join_url }}</pre>
+    <p>Comparte ese link con el usuario.</p>
+    <p><a href="{% url 'project_home' project.slug %}">Volver al proyecto</a></p>
+  </body>
+</html>

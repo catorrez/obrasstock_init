@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Nota de Pedido {{ nota.numero }}</title>
+<style>
+  @page { size: A4; margin: 18mm 12mm; }
+  body { font-family: Arial, sans-serif; color:#111; }
+  .title { text-align:center; border:2px solid #000; border-radius:10px; padding:12px; font-weight:bold; }
+  .title .num { float:right; color:#c00; font-weight:800; }
+  .subtitle { text-align:center; margin-top:2px; font-size:14px; }
+  .row { display:flex; gap:12px; margin:8px 0; }
+  .cell { border-bottom:2px dotted #000; padding:4px 6px; flex:1; }
+  .label { font-size:12px; margin-right:6px; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; }
+  th, td { border:1px solid #000; padding:6px 8px; font-size:12px; }
+  th { background:#ddd; text-transform:uppercase; }
+  .footer { display:flex; gap:12px; margin-top:14px; }
+  .box { border:1px solid #000; height:48px; padding:6px; flex:1; font-size:12px; }
+  .right { text-align:right; }
+</style>
+</head>
+<body>
+  <div class="title">
+    NOTA DE PEDIDO <div class="num">N° {{ nota.numero }}</div>
+    <div class="subtitle">COMPRA</div>
+  </div>
+
+  <div class="row">
+    <div class="cell"><span class="label">OBRA:</span> {{ nota.obra }}</div>
+    <div class="cell right"><span class="label">ALMACÉN:</span> {{ nota.almacen }}</div>
+    <div class="cell right"><span class="label">FECHA:</span> {{ nota.fecha|date:"d/M/Y" }}</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:80px;">Cantidad</th>
+        <th style="width:100px;">Unidad</th>
+        <th>Descripción</th>
+        <th style="width:180px;">Observaciones</th>
+        <th style="width:110px;">Precio</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in nota.detalles.all %}
+      <tr>
+        <td class="right">{{ d.cantidad|floatformat:"-2" }}</td>
+        <td>{{ d.unidad.nombre }}</td>
+        <td>{{ d.descripcion }}</td>
+        <td></td>
+        <td class="right">{{ d.precio|floatformat:"-2" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" style="text-align:center; padding:20px;">Sin ítems</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <div class="box">Solicitado por:<br>{{ nota.solicitante }}</div>
+    <div class="box">Sello:</div>
+    <div class="box">Aprobado por:<br>{{ nota.aprobado_por }}</div>
+  </div>
+</body>
+</html>

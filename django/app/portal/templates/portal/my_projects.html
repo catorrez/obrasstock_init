@@ -1,0 +1,14 @@
+{% extends "portal/base.html" %}
+{% block title %}Mis proyectos{% endblock %}
+{% block content %}
+<h2>Selecciona un proyecto</h2>
+<ul>
+  {% for m in memberships %}
+    <li>
+      <a href="{% url 'portal:switch' project_slug=m.project.slug %}">
+        {{ m.project.name }} (rol: {{ m.get_role_display }})
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

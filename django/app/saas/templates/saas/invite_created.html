@@ -1,0 +1,6 @@
+<h3>Invitación creada</h3>
+<p>Proyecto: {{ project.name }}</p>
+<p>Link de acceso (compártelo):</p>
+<pre>{{ link }}</pre>
+<p>Vence: {{ invite.expires_at }}</p>
+<p><a href="{% url 'project_home' project.slug %}">Volver al proyecto</a></p>

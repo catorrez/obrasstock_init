@@ -1,0 +1,38 @@
+<!-- saas/templates/saas/project_home.html -->
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Proyecto: {{ project.name }}</title>
+</head>
+<body>
+  <h1>Proyecto: {{ project.name }}</h1>
+
+  <p>
+    <a href="{% url 'create_invite' project.slug %}">Crear enlace de invitación</a> ·
+    <a href="/admin/">Ir al admin</a>
+  </p>
+
+  {% if invite_token %}
+    <p>
+      Comparte este enlace para unirse:<br>
+      <code>{{ request.scheme }}://{{ request.get_host }}{% url 'join_project' invite_token %}</code>
+    </p>
+  {% endif %}
+
+  <h2>Módulos</h2>
+  {% if modules %}
+    <ul>
+      {% for pm in modules %}
+        <li>
+          {{ pm.module.name }} ({{ pm.module.code }}) —
+          <strong>{{ pm.enabled|yesno:"habilitado,deshabilitado" }}</strong>
+          [<a href="{% url 'toggle_module' project.slug pm.module.code %}">alternar</a>]
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No hay módulos configurados aún.</p>
+  {% endif %}
+</body>
+</html>

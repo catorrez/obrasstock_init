@@ -1,0 +1,11 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Invitar a {{ project.name }}</h1>
+    <form method="post">{% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Crear invitación</button>
+    </form>
+    <p><a href="{% url 'project_home' project.slug %}">Volver</a></p>
+  </body>
+</html>

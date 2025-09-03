@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>ObrasStock · Portal</h1>
+    <p><a href="{% url 'portal:projects' %}">Mis proyectos</a> · <a href="{% url 'portal:logout' %}">Salir</a></p>
+    <h2>Selecciona un proyecto</h2>
+    <ul>
+      {% for m in memberships %}
+        <li><a href="/p/{{ m.project.slug }}/home/">{{ m.project.name }}</a> (rol: {{ m.role }})</li>
+      {% empty %}
+        <li>No tienes proyectos asignados aún.</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

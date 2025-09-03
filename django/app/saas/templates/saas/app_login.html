@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="es"><body>
+  <h2>Iniciar sesión</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div><label>Usuario</label> {{ form.username }}</div>
+    <div><label>Contraseña</label> {{ form.password }}</div>
+    <button type="submit">Entrar</button>
+  </form>
+</body></html>

@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <title>Panel del Cliente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>body{font-family:system-ui,Arial,sans-serif;margin:2rem}</style>
+  </head>
+  <body>
+    <h1>Bienvenido, {{ request.user.get_username }}</h1>
+    <p>Este es tu panel de cliente. (Aquí listaremos tus proyectos y módulos habilitados.)</p>
+    <p><a href="/app/logout/">Cerrar sesión</a></p>
+  </body>
+</html>

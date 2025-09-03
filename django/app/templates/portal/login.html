@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Acceso clientes</title></head>
+<body>
+  <h1>ObrasStock · Acceso clientes</h1>
+
+  {% if form.non_field_errors %}
+    <p style="color:red">{{ form.non_field_errors }}</p>
+  {% endif %}
+
+  <form method="post" action="">
+    {% csrf_token %}
+    <p>
+      {{ form.username.label_tag }}<br>
+      {{ form.username }}
+      {% for e in form.username.errors %}<br><span style="color:red">{{ e }}</span>{% endfor %}
+    </p>
+    <p>
+      {{ form.password.label_tag }}<br>
+      {{ form.password }}
+      {% for e in form.password.errors %}<br><span style="color:red">{{ e }}</span>{% endfor %}
+    </p>
+    <button type="submit">Ingresar</button>
+  </form>
+
+  <p style="margin-top:2rem"><a href="/">Ir al inicio</a></p>
+</body>
+</html>

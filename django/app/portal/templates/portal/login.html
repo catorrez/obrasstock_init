@@ -1,0 +1,15 @@
+{% extends "portal/base.html" %}
+{% block title %}Ingresar{% endblock %}
+{% block content %}
+<h2>Ingresar</h2>
+<form method="post" style="display:grid; gap:.75rem; max-width:340px;">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <label>Usuario<br>{{ form.username }}</label>
+  <label>Contraseña<br>{{ form.password }}</label>
+  <button type="submit">Entrar</button>
+</form>
+<p style="margin-top:1rem; font-size:.95rem; color:#555">
+  Si no tienes acceso, pide a tu administrador que te invite al proyecto.
+</p>
+{% endblock %}

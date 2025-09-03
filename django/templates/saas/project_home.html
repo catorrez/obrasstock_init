@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Proyecto: {{ project.name }}</h1>
+
+    <p>Usuarios: {{ used_seats }} / {{ project.user_limit }}</p>
+
+    <h2>Módulos</h2>
+    <ul>
+      {% for pm in mods %}
+        <li>
+          {{ pm.module.name }} ({{ pm.module.code }})
+          — <a href="{% url 'toggle_module' project.slug pm.module.code %}">
+              {% if pm.enabled %}→ ON{% else %}→ OFF{% endif %}
+            </a>
+        </li>
+      {% empty %}
+        <li>No hay módulos configurados aún.</li>
+      {% endfor %}
+    </ul>
+
+    {% if can_invite %}
+      <h3>Invitar usuarios</h3>
+      <form action="{% url 'create_invite' project.slug %}" method="post">
+        {% csrf_token %}
+        {{ invite_form.as_p }}
+        <button type="submit">Crear invitación</button>
+      </form>
+    {% endif %}
+
+    <p><a href="/admin/">Ir al admin</a></p>
+  </body>
+</html>

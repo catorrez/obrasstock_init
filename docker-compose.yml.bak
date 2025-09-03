@@ -1,0 +1,66 @@
+cat <<'YML' > docker-compose.yml
+version: "3.9"
+
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MYSQL_DATABASE}
+      MARIADB_USER: ${MYSQL_USER}
+      MARIADB_PASSWORD: ${MYSQL_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./data/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - obras_net
+
+  web:
+    build:
+      context: ./django
+    environment:
+      TZ: ${TZ}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: ${DJANGO_DEBUG}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+    volumes:
+      - ./django/app:/app
+      - ./data/static:/app/static
+      - ./data/media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - obras_net
+    restart: unless-stopped
+    command: ["/entrypoint.sh"]
+
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./data/static:/static:ro
+      - ./data/media:/media:ro
+    networks:
+      - obras_net
+    restart: unless-stopped
+
+networks:
+  obras_net:
+    driver: bridge
+YML
