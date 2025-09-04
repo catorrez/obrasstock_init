@@ -1,15 +1,45 @@
+# Python
 __pycache__/
 *.py[cod]
+*.sqlite3
+
+# Entornos
 .venv/
 env/
 .env
 .env.*
-.DS_Store
+
+# Logs y dumps
 *.log
-db.sqlite3
-*.sqlite3
-media/
-staticfiles/
+*.sql
+*.dump
+*.tar
+*.tar.gz
+*.gz
+*.zip
+
+# Front
 node_modules/
-.idea/
+.dist/
+.build/
+
+# Django estáticos/subidos
+staticfiles/
+media/
+
+# Docker volúmenes/datos
+data/
+**/data/
+db/
+**/db/
+mysql/
+**/mysql/
+postgres/
+**/postgres/
+redis/
+**/redis/
+
+# IDE
 .vscode/
+.idea/
+.DS_Store
