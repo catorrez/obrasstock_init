@@ -43,3 +43,13 @@ redis/
 .vscode/
 .idea/
 .DS_Store
+data/
+**/data/
+db/
+**/db/
+mysql/
+**/mysql/
+postgres/
+**/postgres/
+redis/
+**/redis/
