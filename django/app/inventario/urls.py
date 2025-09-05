@@ -1,14 +1,11 @@
 # inventario/urls.py
 from django.urls import path
-from . import views
+from .views import inventario_home, export_kardex_xlsx, nota_pedido_imprimir
 
 app_name = "inventario"
 
 urlpatterns = [
-    # landing del módulo Inventario dentro del proyecto
-    path("home/", views.home, name="home"),
-
-    # endpoints que ya tenías
-    path("kardex/export/", views.export_kardex_xlsx, name="kardex_export"),
-    path("nota/<int:pk>/imprimir/", views.nota_pedido_imprimir, name="nota_pedido_imprimir"),
+    path("", inventario_home, name="home"),
+    path("kardex/export/", export_kardex_xlsx, name="kardex_export"),
+    path("nota/<int:pk>/imprimir/", nota_pedido_imprimir, name="nota_pedido_imprimir"),
 ]

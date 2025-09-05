@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Mis Proyectos</title></head>
+<body>
+  <h1>Proyectos del cliente</h1>
+  <ul>
+    {% for m in memberships %}
+      <li>
+        {{ m.project.name }} —
+        <a href="{% url 'project_home' project_slug=m.project.slug %}">Abrir</a>
+      </li>
+    {% empty %}
+      <li>No tienes proyectos asignados.</li>
+    {% endfor %}
+  </ul>
+  <p><a href="{% url 'app_logout' %}">Cerrar sesión</a></p>
+</body></html>

@@ -1,27 +1,10 @@
 # portal/urls.py
 from django.urls import path
-from django.contrib.auth import views as auth_views
-from saas import views as saas_views
-from saas.forms import ClientAuthForm
-
-app_name = "portal"
+from .views import AppLoginView, app_index, app_logout, select_project
 
 urlpatterns = [
-    path("", saas_views.app_home, name="home"),
-
-    path(
-        "login/",
-        auth_views.LoginView.as_view(
-            template_name="saas/app_login.html",
-            authentication_form=ClientAuthForm,
-            redirect_authenticated_user=True,
-            extra_context={"title": "ObrasStock · Acceso clientes"},
-        ),
-        name="login",
-    ),
-    path(
-        "logout/",
-        auth_views.LogoutView.as_view(next_page="/app/login/"),
-        name="logout",
-    ),
+    path("", app_index, name="portal_home"),
+    path("login/", AppLoginView.as_view(), name="app_login"),
+    path("logout/", app_logout, name="app_logout"),
+    path("projects/", select_project, name="select_project"),
 ]

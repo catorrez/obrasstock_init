@@ -2,14 +2,11 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.utils.translation import gettext_lazy as _
-
 from .models import ProjectRole
-
 
 class ClientAuthForm(AuthenticationForm):
     """
-    Formulario de acceso SOLO para clientes (/app).
-    Bloquea cuentas is_staff o is_superuser para que usen /admin.
+    Login de clientes: bloquea staff/superuser (ellos deben entrar por /admin).
     """
     def confirm_login_allowed(self, user):
         if user.is_staff or user.is_superuser:
@@ -17,7 +14,6 @@ class ClientAuthForm(AuthenticationForm):
                 _("Este acceso es solo para clientes. Usa /admin para entrar."),
                 code="admin_forbidden",
             )
-
 
 class InviteForm(forms.Form):
     email = forms.EmailField(

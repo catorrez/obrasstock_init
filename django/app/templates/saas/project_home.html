@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>{{ project.name }}</title></head>
+<body>
+  <h1>Proyecto: {{ project.name }}</h1>
+
+  <h2>Módulos habilitados</h2>
+  <ul>
+  {% for it in items %}
+    <li>
+      {{ it.name }}
+      {% if it.url %} — <a href="{{ it.url }}">Entrar</a>{% else %} — (en desarrollo){% endif %}
+    </li>
+  {% empty %}
+    <li>No hay módulos habilitados.</li>
+  {% endfor %}
+  </ul>
+
+  {% if can_invite %}
+  <h2>Invitar usuario</h2>
+  <form method="post" action="{% url 'create_invite' project.slug %}">
+    {% csrf_token %}
+    {{ invite_form.as_p }}
+    <button type="submit">Crear invitación</button>
+  </form>
+  {% endif %}
+
+  <p><a href="/app/">Volver a mis proyectos</a></p>
+</body></html>

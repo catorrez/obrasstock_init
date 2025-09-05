@@ -1,23 +1,27 @@
+# core/urls.py
 from django.contrib import admin
 from django.urls import path, include
 from django.http import HttpResponse
-from saas.views import join_project, project_gate
+from saas.views import join_project
 
 def home(request):
     return HttpResponse("ObrasStock OK", content_type="text/plain")
 
 urlpatterns = [
     path("", home, name="home"),
+
+    # Admin dueño/operadores
     path("admin/", admin.site.urls),
 
-    # Portal de clientes (/app)
+    # Portal de clientes
     path("app/", include("portal.urls")),
 
-    # Invitaciones existentes
+    # Invitaciones (token)
     path("join/<str:token>/", join_project, name="join_project"),
 
-    # SAAS e Inventario
+    # Rutas SaaS (toggler de módulos, invites, project home)
     path("", include("saas.urls")),
-    path("p/<slug:project_slug>/", include("inventario.urls")),
-    path("p/<slug:project_slug>/", project_gate, name="project_gate"),
+
+    # Rutas de módulos por proyecto (inventario, etc.)
+    path("p/<slug:project_slug>/", include(("inventario.urls", "inventario"), namespace="inventario")),
 ]
