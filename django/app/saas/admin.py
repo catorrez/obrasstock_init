@@ -1,12 +1,15 @@
 # saas/admin.py
-
+from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .models import Project, Module, ProjectModule, Membership, ProjectRole
 
-# ====== Permisos de plataforma (por grupos) ======
+
+# ========= helpers de permisos (grupos) =========
 ALLOWED_GROUPS = ("GodAdmin", "SuperAdmin")
 
 def user_is_platform_admin(user) -> bool:
@@ -17,7 +20,21 @@ def user_is_platform_admin(user) -> bool:
     return user.groups.filter(name__in=ALLOWED_GROUPS).exists()
 
 
-# ====== INLINES ======
+# ========= Admin oculto para User (necesario para autocomplete) =========
+User = get_user_model()
+
+@admin.register(User)
+class HiddenUserAdmin(DjangoUserAdmin):
+    """
+    Registramos el admin de User para habilitar autocomplete_fields,
+    pero lo ocultamos del menú del admin.
+    """
+    # El DjangoUserAdmin ya define search_fields adecuados.
+    def has_module_permission(self, request):
+        return False
+
+
+# ========= INLINES =========
 
 class ProjectModuleInline(admin.TabularInline):
     """
@@ -28,20 +45,6 @@ class ProjectModuleInline(admin.TabularInline):
     autocomplete_fields = ["module"]
     fields = ("module", "enabled")
     show_change_link = True
-
-    # Sólo God/SuperAdmin modifican
-    def has_add_permission(self, request, obj=None):
-        return user_is_platform_admin(request.user)
-
-    def has_change_permission(self, request, obj=None):
-        return user_is_platform_admin(request.user)
-
-    def has_delete_permission(self, request, obj=None):
-        return user_is_platform_admin(request.user)
-
-    # Si quieres que usuarios sin permisos lo vean en solo lectura, descomenta:
-    # def get_readonly_fields(self, request, obj=None):
-    #     return () if user_is_platform_admin(request.user) else ("module", "enabled")
 
 
 class MembershipInlineFormSet(BaseInlineFormSet):
@@ -68,7 +71,7 @@ class MembershipInlineFormSet(BaseInlineFormSet):
 class MembershipInline(admin.TabularInline):
     """
     Miembros del proyecto y sus roles.
-    Sólo GodAdmin/SuperAdmin pueden agregar/cambiar/eliminar.
+    Solo GodAdmin/SuperAdmin pueden cambiar roles/eliminar.
     """
     model = Membership
     formset = MembershipInlineFormSet
@@ -87,7 +90,7 @@ class MembershipInline(admin.TabularInline):
         return user_is_platform_admin(request.user)
 
 
-# ====== ADMINS ======
+# ========= ADMINS =========
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -99,19 +102,8 @@ class ProjectAdmin(admin.ModelAdmin):
     """
     inlines = [ProjectModuleInline, MembershipInline]
 
-    list_display = (
-        "name",
-        "slug",
-        "owners_display",
-        "modules_enabled_display",
-        "members_count",
-    )
-    search_fields = (
-        "name",
-        "slug",
-        "memberships__user__username",
-        "memberships__user__email",
-    )
+    list_display = ("name", "slug", "owners_display", "modules_enabled_display", "members_count")
+    search_fields = ("name", "slug", "memberships__user__username", "memberships__user__email")
     ordering = ("name",)
 
     def members_count(self, obj):
@@ -128,9 +120,9 @@ class ProjectAdmin(admin.ModelAdmin):
         return ", ".join(pm.module.name for pm in qs)
     modules_enabled_display.short_description = "Módulos ON"
 
-    # Permisos de módulo Project en admin
+    # --- permisos en admin ---
     def has_module_permission(self, request):
-        # Todos los autenticados lo pueden ver en el menú
+        # que todos puedan VER el módulo Projects en el menú del admin
         return request.user.is_authenticated
 
     def has_view_permission(self, request, obj=None):
@@ -148,16 +140,24 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Module)
 class ModuleAdmin(admin.ModelAdmin):
-    """Catálogo de módulos del sistema (Inventario, Reportes, etc.)."""
+    """
+    Catálogo de módulos del sistema (Inventario, Reportes, etc.)
+    Si quieres ocultarlo del menú, descomenta has_module_permission().
+    """
     list_display = ("code", "name")
     search_fields = ("code", "name")
     ordering = ("code",)
+
+    # Para ocultar del menú pero seguir registrado (autocomplete):
+    # def has_module_permission(self, request):
+    #     return False
 
 
 @admin.register(ProjectModule)
 class ProjectModuleAdmin(admin.ModelAdmin):
     """
-    Oculto del menú (se gestiona vía inline en Project).
+    Lo ocultamos del menú para evitar duplicar pantallas.
+    Sigue accesible desde el inline dentro de Project.
     """
     list_display = ("project", "module", "enabled")
     autocomplete_fields = ["project", "module"]
@@ -169,7 +169,7 @@ class ProjectModuleAdmin(admin.ModelAdmin):
 @admin.register(Membership)
 class MembershipAdmin(admin.ModelAdmin):
     """
-    Oculto del menú (se gestiona vía inline en Project).
+    Lo ocultamos del menú. Gestión desde Project (inline).
     """
     list_display = ("project", "user", "role", "created_at")
     search_fields = ("project__name", "user__username", "user__email")
@@ -177,53 +177,3 @@ class MembershipAdmin(admin.ModelAdmin):
 
     def has_module_permission(self, request):
         return False
-
-
-# ====== Overrides para Usuarios/Grupos del admin ======
-# Renombramos y filtramos usuarios admin (is_staff=True) en el listado.
-
-from django.contrib.auth.admin import UserAdmin, GroupAdmin
-from django.contrib.auth.models import User, Group
-
-# Cambiamos etiquetas visibles en el menú del admin
-User._meta.verbose_name = "Usuario Admin"
-User._meta.verbose_name_plural = "Usuarios Admin"
-Group._meta.verbose_name = "Grupo Admin"
-Group._meta.verbose_name_plural = "Grupos Admin"
-
-# Re-registramos User para filtrar sólo staff/superusers
-try:
-    admin.site.unregister(User)
-except admin.sites.NotRegistered:
-    pass
-
-
-@admin.register(User)
-class StaffOnlyUserAdmin(UserAdmin):
-    """En el listado aparecen sólo cuentas de administración (is_staff=True)."""
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.filter(is_staff=True)
-
-    # Si quisieras restringir totalmente el acceso al módulo de usuarios admin
-    # sólo a GodAdmin / SuperAdmin / superuser, descomenta:
-    #
-    # def _is_platform_admin(self, user):
-    #     return user.is_superuser or user.groups.filter(name__in=ALLOWED_GROUPS).exists()
-    # def has_module_permission(self, request): return self._is_platform_admin(request.user)
-    # def has_view_permission(self, request, obj=None): return self._is_platform_admin(request.user)
-    # def has_add_permission(self, request): return self._is_platform_admin(request.user)
-    # def has_change_permission(self, request, obj=None): return self._is_platform_admin(request.user)
-    # def has_delete_permission(self, request, obj=None): return self._is_platform_admin(request.user)
-
-
-# Re-registramos Group (para renombrar en el menú)
-try:
-    admin.site.unregister(Group)
-except admin.sites.NotRegistered:
-    pass
-
-
-@admin.register(Group)
-class AdminGroupAdmin(GroupAdmin):
-    pass
