@@ -25,3 +25,9 @@ data/
 *.sql
 *.sql.gz
 *.dump
+
+# No subir backups/archives
+*.tar
+*.tar.gz
+*.zip
+*.7z
