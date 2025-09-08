@@ -1,11 +1,7 @@
 from django.apps import AppConfig
 
-
 class SaaSConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
+    # Usa el path de tu app real (carpeta "app/saas" dentro de "django")
     name = "saas"
-    verbose_name = "SaaS"
-
-    def ready(self):
-        # Conectar señales (post_migrate para crear módulos base, etc.)
-        from . import signals  # noqa: F401
+    verbose_name = "SAAS"   # Así saldrá el bloque en /admin
