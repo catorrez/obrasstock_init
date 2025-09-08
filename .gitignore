@@ -21,3 +21,7 @@ data/
 *.tar.gz
 *.zip
 *.7z
+data/
+*.sql
+*.sql.gz
+*.dump
