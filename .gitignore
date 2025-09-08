@@ -12,3 +12,12 @@ db.sqlite3
 .vscode/
 .idea/
 .DS_Store
+# No subir datos binarios/locales
+data/
+*.sql
+*.sql.gz
+*.dump
+*.tar
+*.tar.gz
+*.zip
+*.7z
