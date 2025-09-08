@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     # Apps del proyecto
-    "saas.apps.SaasConfig",
+    "saas.apps.SaaSConfig",
     "inventario",
     "portal",
 ]

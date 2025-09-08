@@ -1,55 +1,14 @@
-# Python
+.env
+*.key
+*.pem
 __pycache__/
 *.py[cod]
-*.sqlite3
-
-# Entornos
-.venv/
-env/
-.env
-.env.*
-
-# Logs y dumps
-*.log
-*.sql
-*.dump
-*.tar
-*.tar.gz
-*.gz
-*.zip
-
-# Front
-node_modules/
-.dist/
-.build/
-
-# Django estáticos/subidos
-staticfiles/
+*.egg-info/
 media/
-
-# Docker volúmenes/datos
-data/
-**/data/
-db/
-**/db/
-mysql/
-**/mysql/
-postgres/
-**/postgres/
-redis/
-**/redis/
-
-# IDE
+staticfiles/
+db.sqlite3
+*.log
+*.pid
 .vscode/
 .idea/
 .DS_Store
-data/
-**/data/
-db/
-**/db/
-mysql/
-**/mysql/
-postgres/
-**/postgres/
-redis/
-**/redis/

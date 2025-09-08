@@ -1,13 +1,9 @@
-# saas/admin.py
 from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
-from django.contrib.auth import get_user_model
-from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .models import Project, Module, ProjectModule, Membership, ProjectRole
-
 
 # ========= helpers de permisos (grupos) =========
 ALLOWED_GROUPS = ("GodAdmin", "SuperAdmin")
@@ -18,20 +14,6 @@ def user_is_platform_admin(user) -> bool:
     if user.is_superuser:
         return True
     return user.groups.filter(name__in=ALLOWED_GROUPS).exists()
-
-
-# ========= Admin oculto para User (necesario para autocomplete) =========
-User = get_user_model()
-
-@admin.register(User)
-class HiddenUserAdmin(DjangoUserAdmin):
-    """
-    Registramos el admin de User para habilitar autocomplete_fields,
-    pero lo ocultamos del menú del admin.
-    """
-    # El DjangoUserAdmin ya define search_fields adecuados.
-    def has_module_permission(self, request):
-        return False
 
 
 # ========= INLINES =========
@@ -122,7 +104,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
     # --- permisos en admin ---
     def has_module_permission(self, request):
-        # que todos puedan VER el módulo Projects en el menú del admin
+        # todos pueden VER el módulo Projects en el menú (para consultar)
         return request.user.is_authenticated
 
     def has_view_permission(self, request, obj=None):
@@ -142,15 +124,10 @@ class ProjectAdmin(admin.ModelAdmin):
 class ModuleAdmin(admin.ModelAdmin):
     """
     Catálogo de módulos del sistema (Inventario, Reportes, etc.)
-    Si quieres ocultarlo del menú, descomenta has_module_permission().
     """
     list_display = ("code", "name")
     search_fields = ("code", "name")
     ordering = ("code",)
-
-    # Para ocultar del menú pero seguir registrado (autocomplete):
-    # def has_module_permission(self, request):
-    #     return False
 
 
 @admin.register(ProjectModule)
@@ -177,3 +154,47 @@ class MembershipAdmin(admin.ModelAdmin):
 
     def has_module_permission(self, request):
         return False
+
+
+# ========== USER/GROUP PROXIES EN SAAS ==========
+
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.contrib.auth.admin import UserAdmin as _DefaultUserAdmin, GroupAdmin as _DefaultGroupAdmin
+from .models import UserProxy, GroupProxy
+
+# 1) Obtener el modelo User ACTIVO antes de usarlo en decorators
+User = get_user_model()
+
+# 2) Capturar las clases ModelAdmin actualmente registradas (antes de unregister)
+#    Hacemos una copia porque vamos a modificar el registry.
+_registry = admin.site._registry.copy()
+UserAdminBase = _registry.get(User).__class__ if _registry.get(User) else _DefaultUserAdmin
+GroupAdminBase = _registry.get(Group).__class__ if _registry.get(Group) else _DefaultGroupAdmin
+
+# 3) Quitar los originales del admin (si estaban)
+for model in (User, Group):
+    try:
+        admin.site.unregister(model)
+    except admin.sites.NotRegistered:
+        pass
+
+# 4) Registrar el User/Group reales con admin oculto (para que funcione autocomplete)
+@admin.register(User)
+class _HiddenUserAdmin(UserAdminBase):
+    def has_module_permission(self, request):
+        return False  # no aparece en el menú
+
+@admin.register(Group)
+class _HiddenGroupAdmin(GroupAdminBase):
+    def has_module_permission(self, request):
+        return False
+
+# 5) Registrar los PROXIES bajo SAAS heredando las mismas clases Admin
+@admin.register(UserProxy)
+class UserProxyAdmin(UserAdminBase):
+    pass
+
+@admin.register(GroupProxy)
+class GroupProxyAdmin(GroupAdminBase):
+    pass

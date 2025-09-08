@@ -107,3 +107,23 @@ class Invite(models.Model):
     @property
     def is_expired(self) -> bool:
         return timezone.now() >= self.expires_at
+
+# --- Proxy models para reagrupar en SAAS ---
+from django.contrib.auth.models import Group  # importa Group
+
+# Ya tienes: from django.contrib.auth import get_user_model
+User = get_user_model()  # ya definido arriba; lo reutilizamos
+
+class UserProxy(User):
+    class Meta:
+        proxy = True
+        app_label = "saas"
+        verbose_name = "Usuario"
+        verbose_name_plural = "Usuarios"
+
+class GroupProxy(Group):
+    class Meta:
+        proxy = True
+        app_label = "saas"
+        verbose_name = "Grupo"
+        verbose_name_plural = "Grupos"
