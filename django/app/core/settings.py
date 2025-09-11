@@ -107,21 +107,24 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # --- Proxy / CSRF / Login ---
 USE_X_FORWARDED_HOST = True
 
-# ¡IMPORTANTE!: Como hoy exponés Nginx en el puerto 8181 del host, incluye los orígenes con :8181.
-# (Si luego sirves en 80/443 sin puerto, puedes quitar los :8181)
+# CSRF trusted origins for SSL/HTTPS setup
 CSRF_TRUSTED_ORIGINS = [
     o for o in os.getenv(
         "DJANGO_CSRF_TRUSTED_ORIGINS",
-        # incluye tus subdominios con esquema y puerto
-        "http://adminos.etvholding.com:8181,http://appos.etvholding.com:8181,"
-        "https://adminos.etvholding.com:8181,https://appos.etvholding.com:8181,"
-        "http://65.21.91.59:8181,http://127.0.0.1:8181,http://localhost:8181"
+        # incluye tus subdominios con HTTPS (sin puerto para 443)
+        "https://adminos.etvholding.com,https://appos.etvholding.com,"
+        "http://adminos.etvholding.com,http://appos.etvholding.com,"
+        "https://localhost,https://127.0.0.1,http://localhost,http://127.0.0.1"
     ).split(",") if o
 ]
 
 # El admin usa su propio login en /admin/login/
 LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "/admin/"
+LOGOUT_REDIRECT_URL = "/admin/login/"
+
+# Para admin logout personalizado
+ADMIN_LOGOUT_URL = "/admin/login/"
 
 # --- Ajustes del proyecto ---
 # Para construir enlaces (invites, etc) hacia el portal de clientes:

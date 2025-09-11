@@ -1,0 +1,3 @@
+# SSL Certificate Auto-Renewal for ObrasStock
+# Runs daily at 12:00 PM to check for certificate renewal
+0 12 * * * /dockers/obrasstock/renew-ssl.sh >> /var/log/ssl-renewal.log 2>&1

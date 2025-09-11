@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
 
-from .models import Project, Module, ProjectModule, Membership, ProjectRole
+from .models import Project, Module, ProjectModule, Membership, ProjectRole, AdminPolicy, UserProxy, GroupProxy
 
 # ========= helpers de permisos (grupos) =========
 ALLOWED_GROUPS = ("GodAdmin", "SuperAdmin")
@@ -120,11 +120,48 @@ class ProjectAdmin(admin.ModelAdmin):
         return user_is_platform_admin(request.user)
 
 
+# ======== MIXIN DE ACCESO CONFIGURABLE (Owner o SysAdmin si toggle ON) ========
+from .roles import user_is_owner, user_is_system_admin
+from .policy import can_manage_groups, can_manage_modules
+
+class OwnerOrSysAdminIfEnabledMixin:
+    """
+    Owner siempre puede; system_admin sólo si el toggle correspondiente está activado.
+    Define 'perm_flag' en la subclase: "groups" o "modules".
+    """
+    perm_flag = None  # "groups" | "modules"
+
+    def _allowed(self, user):
+        if self.perm_flag == "groups":
+            return can_manage_groups(user)
+        elif self.perm_flag == "modules":
+            return can_manage_modules(user)
+        # Fallback estricto: sólo Owner
+        return user_is_owner(user)
+
+    def has_module_permission(self, request):
+        return self._allowed(request.user)
+
+    def has_view_permission(self, request, obj=None):
+        return self._allowed(request.user)
+
+    def has_add_permission(self, request):
+        return self._allowed(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        return self._allowed(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        return self._allowed(request.user)
+
+
 @admin.register(Module)
-class ModuleAdmin(admin.ModelAdmin):
+class ModuleAdmin(OwnerOrSysAdminIfEnabledMixin, admin.ModelAdmin):
     """
     Catálogo de módulos del sistema (Inventario, Reportes, etc.)
+    Owner siempre; system_admin sólo si 'allow_system_admin_modules' está ON.
     """
+    perm_flag = "modules"
     list_display = ("code", "name")
     search_fields = ("code", "name")
     ordering = ("code",)
@@ -161,13 +198,11 @@ class MembershipAdmin(admin.ModelAdmin):
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin as _DefaultUserAdmin, GroupAdmin as _DefaultGroupAdmin
-from .models import UserProxy, GroupProxy
 
 # 1) Obtener el modelo User ACTIVO antes de usarlo en decorators
 User = get_user_model()
 
 # 2) Capturar las clases ModelAdmin actualmente registradas (antes de unregister)
-#    Hacemos una copia porque vamos a modificar el registry.
 _registry = admin.site._registry.copy()
 UserAdminBase = _registry.get(User).__class__ if _registry.get(User) else _DefaultUserAdmin
 GroupAdminBase = _registry.get(Group).__class__ if _registry.get(Group) else _DefaultGroupAdmin
@@ -188,13 +223,44 @@ class _HiddenUserAdmin(UserAdminBase):
 @admin.register(Group)
 class _HiddenGroupAdmin(GroupAdminBase):
     def has_module_permission(self, request):
-        return False
+        return False  # no aparece en el menú
 
-# 5) Registrar los PROXIES bajo SAAS heredando las mismas clases Admin
+
+# 5) Registrar los PROXIES bajo SAAS
 @admin.register(UserProxy)
 class UserProxyAdmin(UserAdminBase):
+    """Gestión de usuarios bajo SAAS."""
     pass
 
 @admin.register(GroupProxy)
-class GroupProxyAdmin(GroupAdminBase):
+class GroupProxyAdmin(OwnerOrSysAdminIfEnabledMixin, GroupAdminBase):
+    """
+    Grupos bajo SAAS: Owner siempre; system_admin sólo si 'allow_system_admin_groups' está ON.
+    """
+    perm_flag = "groups"
     pass
+
+
+# ======== Admin de la Política (toggles) ========
+
+@admin.register(AdminPolicy)
+class AdminPolicyAdmin(admin.ModelAdmin):
+    list_display = ("allow_system_admin_groups", "allow_system_admin_modules", "updated_at")
+    fields = ("allow_system_admin_groups", "allow_system_admin_modules")
+    readonly_fields = ()
+
+    # Sólo Owner puede ver/editar la política
+    def has_module_permission(self, request):
+        return user_is_owner(request.user)
+
+    def has_view_permission(self, request, obj=None):
+        return user_is_owner(request.user)
+
+    def has_add_permission(self, request):
+        return False  # singleton
+
+    def has_change_permission(self, request, obj=None):
+        return user_is_owner(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        return False

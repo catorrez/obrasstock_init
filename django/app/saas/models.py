@@ -127,3 +127,30 @@ class GroupProxy(Group):
         app_label = "saas"
         verbose_name = "Grupo"
         verbose_name_plural = "Grupos"
+        
+# --- Política global para permisos de administración avanzados ---
+from django.db import models
+
+class AdminPolicy(models.Model):
+    """
+    Singleton con toggles para permitir a system_admin administrar
+    - auth.Group
+    - saas.Module
+    El Dueño (Owner) siempre puede, los system_admin solo si está habilitado.
+    """
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    allow_system_admin_groups = models.BooleanField(default=False, help_text="Permitir que system_admin gestione Grupos (auth.Group).")
+    allow_system_admin_modules = models.BooleanField(default=False, help_text="Permitir que system_admin gestione Módulos (saas.Module).")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Política de Administración"
+        verbose_name_plural = "Política de Administración"
+
+    def __str__(self):
+        return "Política de Administración (global)"
+
+    @classmethod
+    def get(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

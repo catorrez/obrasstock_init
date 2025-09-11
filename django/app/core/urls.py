@@ -1,8 +1,12 @@
 # core/urls.py
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.urls import path, include
 from django.http import HttpResponse
 from saas.views import join_project
+
+# Customize admin logout to redirect to login page
+admin.site.logout_template = 'admin/logged_out.html'
 
 def home(request):
     return HttpResponse("ObrasStock OK", content_type="text/plain")

@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  web:
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:1.25-alpine
+    depends_on:
+      - web
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/nginx/ssl:/etc/letsencrypt:ro
+      - ./docker/nginx/www:/var/www/certbot
+      - ./docker/nginx/log:/var/log/nginx
+
+    ports:
+      - "443:443"
+    restart: always
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./docker/nginx/ssl:/etc/letsencrypt
+      - ./docker/nginx/www:/var/www/certbot
