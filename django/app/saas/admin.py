@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
 
-from .models import Project, Module, ProjectModule, Membership, ProjectRole, AdminPolicy, UserProxy, GroupProxy
+from .models import Project, Module, ProjectModule, Membership, ProjectRole, AdminPolicy, UserProxy, GroupProxy, Invite
 
 # ========= helpers de permisos (grupos) =========
 ALLOWED_GROUPS = ("GodAdmin", "SuperAdmin")
@@ -170,27 +170,45 @@ class ModuleAdmin(OwnerOrSysAdminIfEnabledMixin, admin.ModelAdmin):
 @admin.register(ProjectModule)
 class ProjectModuleAdmin(admin.ModelAdmin):
     """
-    Lo ocultamos del menú para evitar duplicar pantallas.
-    Sigue accesible desde el inline dentro de Project.
+    Relación proyecto-módulo (visible solo para OWNER y SYSTEM ADMIN habilitados)
     """
     list_display = ("project", "module", "enabled")
+    list_filter = ("enabled", "module")
+    search_fields = ("project__name", "project__slug", "module__name", "module__code")
     autocomplete_fields = ["project", "module"]
 
     def has_module_permission(self, request):
-        return False
+        return user_is_platform_admin(request.user)
 
 
 @admin.register(Membership)
 class MembershipAdmin(admin.ModelAdmin):
     """
-    Lo ocultamos del menú. Gestión desde Project (inline).
+    Membresías de proyecto (visible solo para OWNER y SYSTEM ADMIN habilitados)
     """
-    list_display = ("project", "user", "role", "created_at")
-    search_fields = ("project__name", "user__username", "user__email")
+    list_display = ("project", "user", "role", "created_at", "is_owner")
+    list_filter = ("role", "created_at")
+    search_fields = ("project__name", "project__slug", "user__username", "user__email")
     autocomplete_fields = ["project", "user"]
+    readonly_fields = ("created_at", "is_owner")
 
     def has_module_permission(self, request):
-        return False
+        return user_is_platform_admin(request.user)
+
+
+@admin.register(Invite)
+class InviteAdmin(admin.ModelAdmin):
+    """
+    Invitaciones a proyectos (visible solo para OWNER y SYSTEM ADMIN habilitados)
+    """
+    list_display = ("project", "email", "role", "created_by", "created_at", "expires_at", "is_expired", "accepted_at")
+    list_filter = ("role", "created_at", "expires_at", "accepted_at")
+    search_fields = ("project__name", "project__slug", "email", "created_by__username")
+    autocomplete_fields = ["project", "created_by"]
+    readonly_fields = ("created_at", "is_expired", "token")
+    
+    def has_module_permission(self, request):
+        return user_is_platform_admin(request.user)
 
 
 # ========== USER/GROUP PROXIES EN SAAS ==========
@@ -264,3 +282,19 @@ class AdminPolicyAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+# ======== REGISTER SAAS MODELS IN OWNER ADMIN SITE FOR COMPARISON ========
+
+# Import the owner admin site
+from control_plane.admin import owner_admin_site
+
+# Register SAAS models in the owner admin site so OWNER can see both systems
+owner_admin_site.register(Project, ProjectAdmin)
+owner_admin_site.register(Module, ModuleAdmin)
+owner_admin_site.register(ProjectModule, ProjectModuleAdmin)
+owner_admin_site.register(Membership, MembershipAdmin)
+owner_admin_site.register(Invite, InviteAdmin)
+owner_admin_site.register(AdminPolicy, AdminPolicyAdmin)
+owner_admin_site.register(UserProxy, UserProxyAdmin)
+owner_admin_site.register(GroupProxy, GroupProxyAdmin)

@@ -19,7 +19,8 @@ def bootstrap_saas(sender, **kwargs):
     if Module is not None:
         base = [
             ("inventario", "Inventario"),
-            ("reportes", "Reportes"),
+            ("saas", "SaaS"),
+            ("control_plane", "Control Plane"),
         ]
         for code, name in base:
             Module.objects.get_or_create(code=code, defaults={"name": name})

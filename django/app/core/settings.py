@@ -13,7 +13,7 @@ ALLOWED_HOSTS = [
     h for h in os.getenv(
         "DJANGO_ALLOWED_HOSTS",
         # default seguro si no pasas variable en compose:
-        ".etvholding.com,adminos.etvholding.com,appos.etvholding.com,"
+        ".etvholding.com,obrasstock.etvholding.com,adminos.etvholding.com,appos.etvholding.com,"
         "65.21.91.59,127.0.0.1,localhost,web"
     ).split(",") if h
 ]
@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     # Apps del proyecto
     "saas.apps.SaaSConfig",
+    "control_plane",
     "inventario",
     "portal",
 ]
@@ -53,16 +54,19 @@ TEMPLATES = [
 # --- Middleware ---
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    # Fuerza dominios correctos: /admin en adminos.* y /app en appos.*
-    "saas.middleware.ForceDomainPerAreaMiddleware",
+    # LOGIN-ONLY: Block all access except designated login pages
+    "saas.login_only_middleware.LoginOnlyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # AUDIT LOGGING: Comprehensive audit trail for all requests
+    "control_plane.audit_middleware.AuditLoggingMiddleware",
+    "control_plane.audit_middleware.SecurityAuditMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Bloquea staff/superuser en /app
-    "saas.middleware.NoStaffOnAppMiddleware",
+    # Router compatibility for tenant database routing
+    "saas.login_only_middleware.RequestTenantContextMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -77,8 +81,47 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST", "db"),
         "PORT": os.getenv("DB_PORT", "3306"),
-        "OPTIONS": {"charset": "utf8mb4"},
-        "CONN_MAX_AGE": 60,
+        "OPTIONS": {
+            "charset": "utf8mb4",
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+            "read_timeout": 30,
+            "write_timeout": 30,
+        },
+        "CONN_MAX_AGE": 300,  # Increased from 60 for better connection reuse
+        "CONN_HEALTH_CHECKS": True,
+    }
+}
+
+# Database performance and pooling configuration with connection limits
+DATABASE_POOL_CONFIG = {
+    "CONN_MAX_AGE": 300,  # Keep connections alive for 5 minutes
+    "CONN_HEALTH_CHECKS": True,
+    "OPTIONS": {
+        "charset": "utf8mb4",
+        "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+        "read_timeout": 30,
+        "write_timeout": 30,
+        # Connection limits to prevent pool exhaustion
+        "max_connections": 20,  # Limit connections per database
+    }
+}
+
+# Per-project database connection limits (for multi-tenant scalability)
+PROJECT_DB_CONNECTION_LIMIT = 10  # Max connections per project database
+TOTAL_DB_CONNECTION_LIMIT = 200   # Total connection limit across all databases
+
+# --- Caching Configuration ---
+# Using Django's built-in cache for user type caching
+# For production, consider Redis or Memcached for better performance
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+        'TIMEOUT': 300,  # 5 minutes default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,
+        }
     }
 }
 
@@ -112,8 +155,8 @@ CSRF_TRUSTED_ORIGINS = [
     o for o in os.getenv(
         "DJANGO_CSRF_TRUSTED_ORIGINS",
         # incluye tus subdominios con HTTPS (sin puerto para 443)
-        "https://adminos.etvholding.com,https://appos.etvholding.com,"
-        "http://adminos.etvholding.com,http://appos.etvholding.com,"
+        "https://obrasstock.etvholding.com,https://adminos.etvholding.com,https://appos.etvholding.com,"
+        "http://obrasstock.etvholding.com,http://adminos.etvholding.com,http://appos.etvholding.com,"
         "https://localhost,https://127.0.0.1,http://localhost,http://127.0.0.1"
     ).split(",") if o
 ]
@@ -128,7 +171,7 @@ ADMIN_LOGOUT_URL = "/admin/login/"
 
 # --- Ajustes del proyecto ---
 # Para construir enlaces (invites, etc) hacia el portal de clientes:
-SITE_BASE_URL = os.getenv("SITE_BASE_URL", "http://appos.etvholding.com:8181")
+SITE_BASE_URL = os.getenv("SITE_BASE_URL", "https://appos.etvholding.com")
 
 # Negativos en stock opcional
 ALLOW_STOCK_NEGATIVE = os.getenv("ALLOW_STOCK_NEGATIVE", "false").lower() == "true"
@@ -140,3 +183,66 @@ ALLOW_STOCK_NEGATIVE = os.getenv("ALLOW_STOCK_NEGATIVE", "false").lower() == "tr
 
 # NOTA: No definas SESSION_COOKIE_DOMAIN ni CSRF_COOKIE_DOMAIN,
 # así cada subdominio maneja sus cookies de forma aislada.
+
+# --- Multi-Tenant Database Configuration ---
+DATABASE_ROUTERS = ['control_plane.router.MultiTenantRouter']
+
+# Thread-local storage for tenant context
+import threading
+_THREAD_LOCAL = threading.local()
+
+# --- Database Performance Monitoring ---
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO' if not DEBUG else 'DEBUG',
+    },
+    'loggers': {
+        'django.db.backends': {
+            'handlers': ['file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        'control_plane.router': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'saas.middleware': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
+# Create logs directory if it doesn't exist
+import os
+logs_dir = BASE_DIR / 'logs'
+if not logs_dir.exists():
+    logs_dir.mkdir(exist_ok=True)

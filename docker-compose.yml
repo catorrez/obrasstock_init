@@ -26,8 +26,8 @@ services:
       TZ: ${TZ}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       DJANGO_DEBUG: ${DJANGO_DEBUG}
-      DJANGO_ALLOWED_HOSTS: ".etvholding.com,adminos.etvholding.com,appos.etvholding.com,65.21.91.59,127.0.0.1,localhost,web"
-      DJANGO_CSRF_TRUSTED_ORIGINS: "${DJANGO_CSRF_TRUSTED_ORIGINS}"
+      DJANGO_ALLOWED_HOSTS: ".etvholding.com,obrasstock.etvholding.com,adminos.etvholding.com,appos.etvholding.com,65.21.91.59,127.0.0.1,localhost,web"
+      DJANGO_CSRF_TRUSTED_ORIGINS: "https://obrasstock.etvholding.com,https://adminos.etvholding.com,https://appos.etvholding.com,http://obrasstock.etvholding.com,http://adminos.etvholding.com,http://appos.etvholding.com"
       DB_NAME: ${MYSQL_DATABASE}
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
