@@ -8,19 +8,20 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('inventario', '0003_consecutivo_notapedido_notapedidodetalle'),
-        ('saas', '0001_initial'),
+        # ('saas', '0001_initial'),  # Removed - SAAS system replaced with Control Plane
+        ('control_plane', '0001_initial'),  # Use Control Plane instead
     ]
 
     operations = [
         migrations.AddField(
             model_name='consecutivo',
             name='project',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='saas.project'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='control_plane.project'),
         ),
         migrations.AddField(
             model_name='notapedido',
             name='project',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='saas.project'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='control_plane.project'),
         ),
         migrations.AlterField(
             model_name='consecutivo',

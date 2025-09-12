@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     # Apps del proyecto
-    "saas.apps.SaaSConfig",
+    # "saas.apps.SaaSConfig",  # Removed - using Control Plane instead
     "control_plane",
     "inventario",
     "portal",

@@ -4,7 +4,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path, include
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from saas.views import join_project
+# from saas.views import join_project  # Removed with SAAS system
 from control_plane.admin import owner_admin_site
 from control_plane.system_admin import system_admin_site
 from .views import SubdomainLoginView
@@ -60,11 +60,11 @@ urlpatterns = [
     # PROJECT USERS - appos.etvholding.com only
     path("app/", include("portal.urls")),
 
-    # Common URLs - available on all subdomains
-    path("join/<str:token>/", join_project, name="join_project"),
+    # Common URLs - available on all subdomains  
+    # path("join/<str:token>/", join_project, name="join_project"),  # Removed with SAAS system
 
-    # SaaS project URLs
-    path("", include("saas.urls")),
+    # SaaS project URLs - Removed with SAAS system
+    # path("", include("saas.urls")),
 
     # Module URLs
     path("p/<slug:project_slug>/", include(("inventario.urls", "inventario"), namespace="inventario")),

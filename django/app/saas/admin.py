@@ -284,17 +284,16 @@ class AdminPolicyAdmin(admin.ModelAdmin):
         return False
 
 
-# ======== REGISTER SAAS MODELS IN OWNER ADMIN SITE FOR COMPARISON ========
+# ======== SAAS ADMIN REGISTRATION REMOVED ========
+# SAAS system has been removed in favor of Control Plane
+# All registrations commented out to prevent import errors
 
-# Import the owner admin site
-from control_plane.admin import owner_admin_site
-
-# Register SAAS models in the owner admin site so OWNER can see both systems
-owner_admin_site.register(Project, ProjectAdmin)
-owner_admin_site.register(Module, ModuleAdmin)
-owner_admin_site.register(ProjectModule, ProjectModuleAdmin)
-owner_admin_site.register(Membership, MembershipAdmin)
-owner_admin_site.register(Invite, InviteAdmin)
-owner_admin_site.register(AdminPolicy, AdminPolicyAdmin)
-owner_admin_site.register(UserProxy, UserProxyAdmin)
-owner_admin_site.register(GroupProxy, GroupProxyAdmin)
+# from control_plane.admin import owner_admin_site
+# owner_admin_site.register(Project, ProjectAdmin)
+# owner_admin_site.register(Module, ModuleAdmin)
+# owner_admin_site.register(ProjectModule, ProjectModuleAdmin)
+# owner_admin_site.register(Membership, MembershipAdmin)
+# owner_admin_site.register(Invite, InviteAdmin)
+# owner_admin_site.register(AdminPolicy, AdminPolicyAdmin)
+# owner_admin_site.register(UserProxy, UserProxyAdmin)
+# owner_admin_site.register(GroupProxy, GroupProxyAdmin)

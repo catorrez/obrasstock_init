@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.shortcuts import redirect, render
 from django.conf import settings
-from saas.models import Membership, ProjectModule
+from control_plane.models import ProjectMembership, ProjectModule
 
 @login_required(login_url="/app/login/")
 def app_home(request):
@@ -10,7 +10,7 @@ def app_home(request):
     App home for regular users - shows their available projects.
     """
     # Get user's project memberships
-    memberships = Membership.objects.filter(
+    memberships = ProjectMembership.objects.filter(
         user=request.user
     ).select_related('project').order_by('project__name')
     
