@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseBadRequest
 from datetime import datetime
 
-from .models import Kardex, NotaPedido
+from .models import Kardex
 
 @login_required(login_url="/app/login/")
 def inventario_home(request, project_slug):
@@ -43,7 +43,3 @@ def export_kardex_xlsx(request, project_slug):
     except Exception as e:
         return HttpResponseBadRequest(f"Error: {e}")
 
-@login_required(login_url="/app/login/")
-def nota_pedido_imprimir(request, project_slug, pk):
-    nota = get_object_or_404(NotaPedido, pk=pk, project__slug=project_slug)
-    return render(request, "inventario/nota_pedido_print.html", {"nota": nota})

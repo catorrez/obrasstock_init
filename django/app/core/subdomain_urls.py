@@ -6,7 +6,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from saas.views import join_project
+# from saas.views import join_project  # REMOVED
 from control_plane.admin import owner_admin_site, system_admin_site
 
 def owner_home(request):
@@ -70,11 +70,11 @@ admin_patterns = [
 # PROJECT USERS URLs (appos.etvholding.com)
 project_patterns = [
     path("", include("portal.urls")),  # Main app portal
-    path("p/<slug:project_slug>/", include("saas.urls")),  # Project home
+    # path("p/<slug:project_slug>/", include("saas.urls")),  # Project home - REMOVED
     path("p/<slug:project_slug>/", include(("inventario.urls", "inventario"), namespace="inventario")),
 ]
 
 # Common URLs (available on all subdomains)
 common_patterns = [
-    path("join/<str:token>/", join_project, name="join_project"),
+    # path("join/<str:token>/", join_project, name="join_project"),  # REMOVED
 ]

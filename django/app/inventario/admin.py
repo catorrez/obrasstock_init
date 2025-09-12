@@ -78,28 +78,3 @@ class KardexAdmin(admin.ModelAdmin):
     search_fields = ("material__descripcion","material__codigo","referencia")
     readonly_fields = ("movimiento","material","almacen","fecha","tipo","cantidad_entrada","cantidad_salida","costo_unitario","saldo_stock","saldo_costo_promedio","referencia")
 
-from django.utils.html import format_html
-from django.urls import reverse
-from .models import NotaPedido, NotaPedidoDetalle
-
-class NotaPedidoDetalleInline(admin.TabularInline):
-    model = NotaPedidoDetalle
-    extra = 1
-
-@admin.register(NotaPedido)
-class NotaPedidoAdmin(admin.ModelAdmin):
-    list_display = ("numero","fecha","almacen","obra","estado","total_mostrar","imprimir_link")
-    list_filter = ("estado","almacen","fecha")
-    search_fields = ("numero","obra","referencia")
-    inlines = [NotaPedidoDetalleInline]
-    readonly_fields = ("numero",)
-    view_on_site = True  # usa get_absolute_url
-
-    def total_mostrar(self, obj):
-        return f"{obj.total:.2f}"
-    total_mostrar.short_description = "Total"
-
-    def imprimir_link(self, obj):
-        url = obj.get_absolute_url()
-        return format_html('<a target="_blank" href="{}">Imprimir</a>', url)
-    imprimir_link.short_description = "Imprimir"
